@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const User = require('../models/user')
+const jwt = require('jsonwebtoken');
+
+// config
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/teochFL5M5Cc6eidkmI5"));
+var Accounts = require('web3-eth-accounts');
+var accounts = new Accounts('https://rinkeby.infura.io/teochFL5M5Cc6eidkmI5');
 
 exports.signUp = (req, res, next) =>{
   User.find({email:req.body.email})
@@ -17,10 +24,13 @@ exports.signUp = (req, res, next) =>{
               error: err
             });
           } else{
+            var info = web3.eth.accounts.create();
             const user = new User({
               _id: new mongoose.Types.ObjectId(),
               email: req.body.email,
-              password: hash
+              password: hash,
+              account: info.address,
+              privatekey: info.privateKey
             });
             user
               .save()
@@ -69,7 +79,8 @@ exports.logIn = (req, res, next) => {
         );
           return res.status(200).json({
             message: 'Auth succesful',
-            token:token
+            token:token,
+            account: user[0].account
           });
         }
         res.status(401).json({
